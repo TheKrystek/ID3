@@ -1,0 +1,21 @@
+.label-cell{
+    -fx-background-color: lightskyblue;
+    -fx-padding: 10px;
+    -fx-background-radius: 10px;
+}
+
+.selected .label-cell{
+    -fx-background-color: dodgerblue;
+}
+
+.edge{
+    -fx-background-color: azure;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+
+.selected .edge{
+    -fx-stroke-width: 3px;
+}
+

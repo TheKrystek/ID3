@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pl.swidurski.gui.gui.Controller">
+  <tabs>
+    <Tab fx:id="mainTab" text="Main">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <FlowPane alignment="CENTER" layoutX="144.0" layoutY="72.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <VBox alignment="TOP_RIGHT" spacing="10.0">
+                           <children>
+                              <HBox alignment="CENTER">
+                                 <children>
+                                    <TextField fx:id="pathField" minWidth="400.0" promptText="data.csv" />
+                                    <Button mnemonicParsing="false" onAction="#loadFileAction" text="Load" />
+                                 </children>
+                              </HBox>
+                              <VBox fx:id="inputPane" alignment="TOP_RIGHT" spacing="10.0">
+                                 <children>
+                                    <TableView fx:id="inputTable" prefHeight="70.0" prefWidth="800.0" />
+                                    <Button mnemonicParsing="false" onAction="#addRowAction" text="Show" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </FlowPane>
+               </children></AnchorPane>
+      </content>
+    </Tab>
+    <Tab fx:id="dataTab" text="Data">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <TableView fx:id="dataTable" layoutX="81.0" layoutY="35.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children></AnchorPane>
+      </content>
+    </Tab>
+      <Tab fx:id="treeTab" text="Tree">
+        <content>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <SplitPane dividerPositions="0.6939799331103679" layoutX="269.0" layoutY="70.0" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <AnchorPane fx:id="leftPane" minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0" />
+                      <AnchorPane maxWidth="300.0" minHeight="100.0" minWidth="100.0" prefHeight="160.0" prefWidth="100.0">
+                           <children>
+                              <VBox layoutX="30.0" layoutY="57.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <HBox>
+                                       <children>
+                                          <Label minWidth="100.0" text="Step" />
+                                          <Slider fx:id="stepSlider" max="300.0" min="1.0" value="100.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="10.0" layoutY="10.0">
+                                       <children>
+                                          <Label minWidth="100.0" text="Sibling distance" />
+                                          <Slider fx:id="siblingDistanceSlider" max="5.0" value="1.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="10.0" layoutY="62.0">
+                                       <children>
+                                          <Label minWidth="100.0" text="Tree distance" />
+                                          <Slider fx:id="treeDistanceSlider" max="5.0" value="2.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="10.0" layoutY="83.0">
+                                       <children>
+                                          <Label minWidth="100.0" text="Node size" />
+                                          <Slider fx:id="nodeSizeSlider" max="5.0" value="1.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#refreshAction" text="Redraw tree" VBox.vgrow="ALWAYS">
+                                       <VBox.margin>
+                                          <Insets top="15.0" />
+                                       </VBox.margin>
+                                    </Button>
+                                    <VBox>
+                                       <VBox.margin>
+                                          <Insets top="10.0" />
+                                       </VBox.margin>
+                                       <children>
+                                          <HBox spacing="5.0">
+                                             <children>
+                                                <Label text="Label:" />
+                                                <Label fx:id="label" layoutX="10.0" layoutY="10.0" />
+                                             </children>
+                                          </HBox>
+                                          <HBox layoutX="10.0" layoutY="10.0" spacing="5.0">
+                                             <children>
+                                                <Label text="Entropy:" />
+                                                <Label fx:id="entropy" layoutX="10.0" layoutY="10.0" />
+                                             </children>
+                                          </HBox>
+                                          <HBox layoutX="10.0" layoutY="31.0" spacing="5.0">
+                                             <children>
+                                                <Label text="Conditional entropy:" />
+                                                <Label fx:id="conditionalEntropy" layoutX="10.0" layoutY="10.0" />
+                                             </children>
+                                          </HBox>
+                                          <HBox layoutX="10.0" layoutY="52.0" spacing="5.0">
+                                             <children>
+                                                <Label text="Information gain:" />
+                                                <Label fx:id="informationGain" layoutX="10.0" layoutY="10.0" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                    </items>
+                  </SplitPane>
+                  <Button mnemonicParsing="false" onAction="#saveAsPng" text="Save as PNG" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="10.0" />
+               </children></AnchorPane>
+        </content>
+      </Tab>
+  </tabs>
+</TabPane>
