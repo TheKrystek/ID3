@@ -1,5 +1,3 @@
-![](img/main.png)
-
 # Funkcje
 - Wczytywanie pliku .CSV
 - Wizualizacja wczytanych danych
@@ -20,4 +18,4 @@ mvn jfx:run
 
 ![](img/tree.png)
 
-![](example/tree.png)
+![](img/example.png)
