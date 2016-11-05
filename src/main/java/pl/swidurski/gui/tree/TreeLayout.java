@@ -1,6 +1,7 @@
 package pl.swidurski.gui.tree;
 
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
 import lombok.Getter;
 
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import java.util.Optional;
 public class TreeLayout<T extends CellContent<T>> extends Layout {
     Graph<T> graph;
 
+    @Getter
+    private SimpleDoubleProperty limit = new SimpleDoubleProperty(5);
     @Getter
     private SimpleDoubleProperty nodeSize = new SimpleDoubleProperty(1);
     @Getter
@@ -23,11 +26,15 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
     public TreeLayout(Graph graph) {
         this.graph = graph;
 
-        nodeSize.addListener((observable, oldValue, newValue) -> execute());
-        siblingDistance.addListener((observable, oldValue, newValue) -> execute());
-        treeDistance.addListener((observable, oldValue, newValue) -> execute());
-        step.addListener((observable, oldValue, newValue) -> execute());
+        ChangeListener<Number> listener = (observable, oldValue, newValue) -> execute();
+
+        limit.addListener(listener);
+        nodeSize.addListener(listener);
+        siblingDistance.addListener(listener);
+        treeDistance.addListener(listener);
+        step.addListener(listener);
     }
+
 
     public void execute() {
         Cell<T> root = getRoot(graph.getModel().getAllCells());
@@ -49,7 +56,7 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
 
     private void checkAllChildrenOnScreen(Cell<T> node) {
         Map<Integer, Double> nodeContour = new HashMap<>();
-        getLeftContour(node, 0, nodeContour);
+        getLeftContour(node, 0, nodeContour, 0);
 
         double shiftAmount = 0;
         for (Integer y : nodeContour.keySet()) {
@@ -97,21 +104,21 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
         }
 
         if (node.getChildrenCells().size() > 0 && !node.isMostLeft()) {
-            checkForConflicts(node);
+            checkForConflicts(node, 0);
         }
     }
 
-    private void checkForConflicts(Cell<T> node) {
+    private void checkForConflicts(Cell<T> node, int depth) {
         double minDistance = treeDistance.get() + nodeSize.get();
         double shiftValue = 0.0;
 
         Map<Integer, Double> nodeContour = new HashMap<>();
-        getLeftContour(node, 0, nodeContour);
+        getLeftContour(node, 0, nodeContour, depth + 1);
 
         Cell sibling = node.getFirstSibling();
         while (sibling != null && sibling != node) {
             Map<Integer, Double> siblingContour = new HashMap<>();
-            getRightContour(sibling, 0, siblingContour);
+            getRightContour(sibling, 0, siblingContour, depth + 1);
 
             for (double level = node.getY() + 1; level <= Math.min(siblingContour.keySet().stream().mapToDouble(Integer::intValue).max().orElse(0), nodeContour.keySet().stream().mapToDouble(Integer::intValue).max().orElse(0)); level++) {
 
@@ -127,7 +134,7 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
                 node.setX(node.getX() + shiftValue);
                 node.setMod(node.getMod() + shiftValue);
 
-                centerNodesBetween(node, sibling);
+                centerNodesBetween(node, sibling, depth + 1);
 
                 shiftValue = 0;
             }
@@ -136,7 +143,7 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
         }
     }
 
-    private void centerNodesBetween(Cell<T> leftNode, Cell<T> rightNode) {
+    private void centerNodesBetween(Cell<T> leftNode, Cell<T> rightNode, int depth) {
         int leftIndex = leftNode.getParentCell().getChildrenCells().indexOf(rightNode);
         int rightIndex = leftNode.getParentCell().getChildrenCells().indexOf(leftNode);
 
@@ -156,36 +163,40 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
                 count++;
             }
 
-            checkForConflicts(leftNode);
+            checkForConflicts(leftNode, depth + 1);
         }
     }
 
-    private void getRightContour(Cell<T> node, int modSum, Map<Integer, Double> values) {
-        if (!values.containsKey(node.Y))
+    private void getRightContour(Cell<T> node, int modSum, Map<Integer, Double> values, int depth) {
+        if (depth > limit.intValue())
+            return;
+
+        if (!values.containsKey((int) node.Y)) {
             values.put((int) node.Y, node.X + modSum);
-        else {
+        } else {
             values.put((int) node.Y, Math.max(values.get((int) node.Y), node.X + modSum));
         }
 
         modSum += node.Mod;
 
         for (Cell<T> child : node.getChildrenCells()) {
-            getRightContour(child, modSum, values);
+            getRightContour(child, modSum, values, depth + 1);
         }
     }
 
-    private void getLeftContour(Cell<T> node, int modSum, Map<Integer, Double> values) {
+    private void getLeftContour(Cell<T> node, int modSum, Map<Integer, Double> values, int depth) {
+        if (depth > limit.intValue())
+            return;
 
-        if (!values.containsKey(node.Y))
+        if (!values.containsKey((int) node.Y)) {
             values.put((int) node.Y, node.X + modSum);
-        else {
+        } else {
             values.put((int) node.Y, Math.min(values.get((int) node.Y), node.X + modSum));
         }
 
-
         modSum += node.Mod;
         for (Cell<T> child : node.getChildrenCells()) {
-            getLeftContour(child, modSum, values);
+            getLeftContour(child, modSum, values, depth + 1);
         }
     }
 

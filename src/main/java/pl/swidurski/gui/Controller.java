@@ -58,6 +58,8 @@ public class Controller {
     @FXML
     private Slider nodeSizeSlider;
     @FXML
+    private Slider maxDepthSlider;
+    @FXML
     private VBox inputPane;
     @FXML
     private Label label;
@@ -227,6 +229,7 @@ public class Controller {
     private void setupLayout() {
         layout = new TreeLayout(graph);
         layout.getStep().bind(stepSlider.valueProperty());
+        layout.getLimit().bind(maxDepthSlider.valueProperty());
         layout.getNodeSize().bind(nodeSizeSlider.valueProperty());
         layout.getSiblingDistance().bind(siblingDistanceSlider.valueProperty());
         layout.getTreeDistance().bind(treeDistanceSlider.valueProperty());
