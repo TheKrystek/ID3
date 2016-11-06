@@ -4,16 +4,19 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.converter.DefaultStringConverter;
 import lombok.Data;
 import pl.swidurski.gui.dialogs.AskForDiscretizationDialog;
 import pl.swidurski.gui.dialogs.AskForRangeDialog;
@@ -51,8 +54,6 @@ public class Controller {
     private Tab treeTab;
     @FXML
     private TableView<ObservableList<String>> dataTable;
-    @FXML
-    private TableView<ObservableList<Item>> inputTable;
     @FXML
     private AnchorPane leftPane;
     @FXML
@@ -208,7 +209,15 @@ public class Controller {
                 Item item = items.stream().filter(p -> p.getAttribute().equals(current.getLabel())).findFirst().get();
                 if (item != null) {
                     current.getCell().select(true);
-                    node = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst().get();
+                    if (node.getValue().isDiscrete()) {
+                        Double d = Double.parseDouble(item.getValue());
+                        String value = node.getValue().getAttributeDiscretizer().getRange(d);
+                        node = node.getChildren().stream().filter(p -> p.getEdge().equals(value)).findFirst().get();
+                    }
+                    else
+                    {
+                        node = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst().get();
+                    }
                     node.getCell().select(true);
                     Edge<TreeNode> edge = graph.getModel().getEdge(node, current);
                     if (edge != null)
@@ -347,25 +356,43 @@ public class Controller {
             column.setMaxWidth(Integer.MAX_VALUE);
             ObservableList<String> values = FXCollections.observableArrayList();
             values.addAll(attribute.getDistinctValues().stream().map(Entry::getString).collect(Collectors.toList()));
-            column.setCellFactory(param -> new ComboBoxTableCell<ObservableList<Item>, String>() {
-                {
-                    getItems().setAll(values);
-                }
+            if (!attribute.isDiscrete()) {
+                addComboBoxFactory(column, values);
+            } else {
+                column.setCellFactory(param -> new TextFieldTableCell<ObservableList<Item>, String>(new DefaultStringConverter()) {
 
-                @Override
-                public void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (item != null) {
-                        setText(item);
-                    } else {
-                        setText(values.get(0));
+                    @Override
+                    public void commitEdit(String item) {
+                        if (!isEditing() && !item.equals(getItem())) {
+                            TableView<ObservableList<Item>> table = getTableView();
+                            if (table != null) {
+                                TableColumn<ObservableList<Item>, String> column = getTableColumn();
+                                TableColumn.CellEditEvent<ObservableList<Item>, String> event = new TableColumn.CellEditEvent<>(table,
+                                        new TablePosition<>(table, getIndex(), column),
+                                        TableColumn.editCommitEvent(), item);
+                                Event.fireEvent(column, event);
+                            }
+                        }
+                        super.commitEdit(item);
                     }
-                }
-            });
 
+                    @Override
+                    public void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null) {
+                            setText(item);
+                        } else {
+                            setText("");
+                        }
+                    }
+                });
+            }
             column.setOnEditCommit(event -> {
+                System.out.println(event.getRowValue());
                 ObservableList<Item> item = event.getRowValue();
-                item.get(attribute.getIndex()).setValue(event.getNewValue());
+                if (item != null) {
+                    item.get(attribute.getIndex()).setValue(event.getNewValue());
+                }
             });
 
             inputTable.getColumns().add(column);
@@ -373,6 +400,24 @@ public class Controller {
 
         input = getDummyItem(dataSet);
         inputTable.getItems().setAll(input);
+    }
+
+    private void addComboBoxFactory(TableColumn<ObservableList<Item>, String> column, final ObservableList<String> values) {
+        column.setCellFactory(param -> new ComboBoxTableCell<ObservableList<Item>, String>() {
+            {
+                getItems().setAll(values);
+            }
+
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(item);
+                } else {
+                    setText(values.get(0));
+                }
+            }
+        });
     }
 
     private ObservableList<Item> getDummyItem(DataSet dataSet) {

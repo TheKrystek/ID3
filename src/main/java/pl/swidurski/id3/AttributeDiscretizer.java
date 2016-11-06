@@ -2,6 +2,7 @@ package pl.swidurski.id3;
 
 import lombok.Getter;
 import pl.swidurski.model.Attribute;
+import pl.swidurski.utils.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +13,8 @@ import java.util.stream.Collectors;
  */
 public class AttributeDiscretizer {
 
-    public final static String INF = "\u221E";
 
-
+    public static final String FORMAT = "%.2f";
     @Getter
     private Attribute attribute;
 
@@ -74,7 +74,7 @@ public class AttributeDiscretizer {
         discreteValues.addAll(inputValues.stream().map(this::getRange).collect(Collectors.toList()));
     }
 
-    private String getRange(Double val) {
+    public String getRange(Double val) {
         return ranges.get(getRangeIndex(val));
     }
 
@@ -91,10 +91,10 @@ public class AttributeDiscretizer {
 
     private void createRanges() {
         for (int i = 0; i < numberOfRanges; i++) {
-            String lower = String.format("%.2f", min + (i * step));
-            String upper = String.format("%.2f", min + ((i + 1) * step));
-            if (i == 0) lower = "-" + INF;
-            if (i == (numberOfRanges - 1)) upper = INF;
+            String lower = String.format(FORMAT, min + (i * step));
+            String upper = String.format(FORMAT, min + ((i + 1) * step));
+            if (i == 0) lower = "-" + StringUtil.INF;
+            if (i == (numberOfRanges - 1)) upper = StringUtil.INF;
 
             String range = String.format("(%s ; %s]", lower, upper);
             System.out.println(range);
