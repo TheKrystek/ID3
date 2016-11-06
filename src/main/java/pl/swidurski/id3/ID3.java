@@ -37,6 +37,20 @@ public class ID3 {
         }
 
         Pair pair = getAttributeWithLowestEntropy(dataSet);
+        if (pair == null){
+            double sum = dataSet.getResult().getDistinctValues().stream().mapToDouble(p -> p.getCount()).sum();
+            Entry mostPossible = null;
+            for (Entry entry : dataSet.getResult().getDistinctValues()) {
+                if (mostPossible == null || entry.getCount() > mostPossible.getCount()) {
+                    mostPossible = entry;
+                }
+            }
+            String nodeText = String.format("%s (%.1f%%)", mostPossible.getString(), mostPossible.getCount() / sum * 100);
+            parent.addChild(new TreeNode(null, nodeText, value));
+            return;
+        }
+
+
         Attribute bestAttribute = pair.getAttribute();
         if (dataSet.getNumberOfNonResultAttributest() == 0) {
             TreeNode node = new TreeNode(null, bestAttribute.getName(), value);
@@ -51,6 +65,7 @@ public class ID3 {
         for (Entry entry : bestAttribute.getDistinctValues()) {
             calculate(node, dataSet, bestAttribute, entry.getString());
         }
+
     }
 
 
@@ -79,6 +94,11 @@ public class ID3 {
                 bestAttribute = attribute;
             }
         }
+
+        if (bestAttribute == null) {
+            return null;
+        }
+
         info.setConditionalEntropy(minEntropy);
         info.setInformationGain(info.getEntropy() - minEntropy);
         return new Pair(bestAttribute, info);

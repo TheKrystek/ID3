@@ -15,7 +15,11 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.Data;
+import pl.swidurski.gui.dialogs.AskForDiscretizationDialog;
+import pl.swidurski.gui.dialogs.AskForRangeDialog;
+import pl.swidurski.gui.tree.Cell;
 import pl.swidurski.gui.tree.*;
+import pl.swidurski.id3.AttributeDiscretizer;
 import pl.swidurski.id3.CSVReader;
 import pl.swidurski.id3.ID3;
 import pl.swidurski.model.Attribute;
@@ -28,10 +32,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Controller {
-    public static final String DEFAULT_PATH = "contact-lenses.csv";
+    public static final String DEFAULT_PATH = "iris.csv";
+    //    public static final String DEFAULT_PATH = "contact-lenses.csv";
     private File path = new File(DEFAULT_PATH);
 
     //<editor-fold desc="FXML Fields">
@@ -79,11 +85,17 @@ public class Controller {
         inputPane.setVisible(false);
         pathField.setText(path.getAbsolutePath());
         addTreeView(graph.getScrollPane());
-
         addTextFieldHandler();
     }
 
     private void addTextFieldHandler() {
+        pathField.textProperty().addListener((observable, oldValue, newValue) -> {
+            File file = new File(newValue);
+            if (file.exists()) {
+                path = file;
+            }
+        });
+
         pathField.setOnMouseClicked(event -> {
             if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
                 Stage stage = (Stage) pathField.getScene().getWindow();
@@ -100,9 +112,9 @@ public class Controller {
     }
 
     private void addTreeNodeHandler(Graph<TreeNode> graph) {
-        pl.swidurski.gui.tree.Cell.Action<TreeNode> action = value -> showInfo(value);
+        Cell.Action<TreeNode> action = value -> showInfo(value);
 
-        for (pl.swidurski.gui.tree.Cell<TreeNode> cell : graph.getModel().getAllCells()) {
+        for (Cell<TreeNode> cell : graph.getModel().getAllCells()) {
             cell.setOnAction(action);
         }
     }
@@ -126,11 +138,43 @@ public class Controller {
     void loadFileAction() throws IOException {
         CSVReader reader = new CSVReader(path);
         DataSet dataSet = reader.read();
+        askIfDyscretize(dataSet);
         setupInputTable(dataSet);
         fillDataTable(dataSet);
         drawTree(dataSet);
         disableTabs(false);
     }
+
+
+    public void askIfDyscretize(DataSet dataSet) {
+        boolean ask = checkIfHasNumericAttriubte(dataSet);
+
+        AskForDiscretizationDialog dialog = new AskForDiscretizationDialog();
+        Optional<ButtonType> show = dialog.show();
+        if (show.get() == dialog.getYes()) {
+            for (Attribute attribute : dataSet.getAttributes()) {
+                if (attribute.isNumeric() && !attribute.isResult()) {
+                    AskForRangeDialog askForRangeDialog = new AskForRangeDialog(attribute);
+                    int ranges = askForRangeDialog.show();
+                    try {
+                        AttributeDiscretizer a = new AttributeDiscretizer(attribute, ranges);
+                    } catch (Exception e) {
+                        System.err.println("Cannot discrtize attribute " + attribute.getName());
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkIfHasNumericAttriubte(DataSet dataSet) {
+        for (Attribute attribute : dataSet.getAttributes()) {
+            if (attribute.isNumeric()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     @FXML
     void refreshAction() {
@@ -148,7 +192,7 @@ public class Controller {
         for (Edge<TreeNode> edge : graph.getModel().getAllEdges()) {
             edge.select(false);
         }
-        for (pl.swidurski.gui.tree.Cell<TreeNode> cell : graph.getModel().getAllCells()) {
+        for (Cell<TreeNode> cell : graph.getModel().getAllCells()) {
             cell.select(false);
         }
     }

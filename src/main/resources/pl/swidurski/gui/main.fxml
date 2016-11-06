@@ -89,7 +89,7 @@
                                     <HBox>
                                        <children>
                                           <Label minWidth="100.0" text="Max depth" />
-                                          <Slider fx:id="maxDepthSlider" max="50.0" min="1.0" value="1.0" HBox.hgrow="ALWAYS" />
+                                          <Slider fx:id="maxDepthSlider" min="50.0" value="1.0" HBox.hgrow="ALWAYS" />
                                        </children>
                                     </HBox>
                                     <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#refreshAction" text="Redraw tree" VBox.vgrow="ALWAYS">

@@ -13,7 +13,7 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
     Graph<T> graph;
 
     @Getter
-    private SimpleDoubleProperty limit = new SimpleDoubleProperty(5);
+    private SimpleDoubleProperty limit = new SimpleDoubleProperty(50);
     @Getter
     private SimpleDoubleProperty nodeSize = new SimpleDoubleProperty(1);
     @Getter
