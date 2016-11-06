@@ -4,22 +4,21 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.ComboBoxTableCell;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.converter.DefaultStringConverter;
 import lombok.Data;
 import pl.swidurski.gui.dialogs.AskForDiscretizationDialog;
 import pl.swidurski.gui.dialogs.AskForRangeDialog;
+import pl.swidurski.gui.dialogs.InfoDialog;
 import pl.swidurski.gui.tree.Cell;
 import pl.swidurski.gui.tree.*;
 import pl.swidurski.id3.AttributeDiscretizer;
@@ -36,11 +35,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class Controller {
-    public static final String DEFAULT_PATH = "iris.csv";
-    //    public static final String DEFAULT_PATH = "contact-lenses.csv";
+    //    public static final String DEFAULT_PATH = "iris.csv";
+    public static final String DEFAULT_PATH = "contact-lenses.csv";
     private File path = new File(DEFAULT_PATH);
 
     //<editor-fold desc="FXML Fields">
@@ -76,6 +74,9 @@ public class Controller {
     private Label conditionalEntropy;
     @FXML
     private Label informationGain;
+    @FXML
+    private GridPane gridPane;
+
     //</editor-fold>
     private Graph<TreeNode> graph = new Graph<>();
     private TreeLayout layout;
@@ -140,7 +141,7 @@ public class Controller {
         CSVReader reader = new CSVReader(path);
         DataSet dataSet = reader.read();
         askIfDyscretize(dataSet);
-        setupInputTable(dataSet);
+        setupGridPane(dataSet);
         fillDataTable(dataSet);
         drawTree(dataSet);
         disableTabs(false);
@@ -148,7 +149,9 @@ public class Controller {
 
 
     public void askIfDyscretize(DataSet dataSet) {
-        boolean ask = checkIfHasNumericAttriubte(dataSet);
+        if (!checkIfHasNumericAttriubte(dataSet)) {
+            return;
+        }
 
         AskForDiscretizationDialog dialog = new AskForDiscretizationDialog();
         Optional<ButtonType> show = dialog.show();
@@ -160,7 +163,7 @@ public class Controller {
                     try {
                         AttributeDiscretizer a = new AttributeDiscretizer(attribute, ranges);
                     } catch (Exception e) {
-                        System.err.println("Cannot discrtize attribute " + attribute.getName());
+                        System.err.println("Cannot discrtize attributeName " + attribute.getName());
                     }
                 }
             }
@@ -206,18 +209,10 @@ public class Controller {
         while (items.size() > 0) {
             if (!node.getChildren().isEmpty()) {
                 TreeNode current = node;
-                Item item = items.stream().filter(p -> p.getAttribute().equals(current.getLabel())).findFirst().get();
+                Item item = items.stream().filter(p -> p.getAttributeName().equals(current.getLabel())).findFirst().get();
                 if (item != null) {
                     current.getCell().select(true);
-                    if (node.getValue().isDiscrete()) {
-                        Double d = Double.parseDouble(item.getValue());
-                        String value = node.getValue().getAttributeDiscretizer().getRange(d);
-                        node = node.getChildren().stream().filter(p -> p.getEdge().equals(value)).findFirst().get();
-                    }
-                    else
-                    {
-                        node = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst().get();
-                    }
+                    node = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst().get();
                     node.getCell().select(true);
                     Edge<TreeNode> edge = graph.getModel().getEdge(node, current);
                     if (edge != null)
@@ -251,19 +246,79 @@ public class Controller {
     @Data
     class Item {
         String value;
-        String attribute;
+        Attribute attribute;
+        String attributeName;
 
-        public Item(String attribute, String value) {
+
+        public Item(Attribute attribute, String value) {
             this.value = value;
             this.attribute = attribute;
+        }
+
+        public String getAttributeName() {
+            return attribute.getName();
         }
     }
 
 
-    private void setupInputTable(DataSet dataSet) {
+    private void setupGridPane(DataSet dataSet) {
         inputPane.setVisible(true);
-        inputTable.setEditable(true);
-        addInputTableColumns(dataSet);
+        input = getDummyItem(dataSet);
+        gridPane.getRowConstraints().clear();
+        createRows();
+    }
+
+    private void createRows() {
+        int i = 0;
+
+        for (Item item : input) {
+            gridPane.add(new Label(item.getAttributeName()), 0, i);
+            gridPane.add(getNode(item), 1, i);
+            i++;
+        }
+    }
+
+    private Node getNode(Item item) {
+        if (item.getAttribute().isDiscrete())
+            return addTextField(item);
+        return addComboBox(item);
+    }
+
+    private Node addTextField(Item item) {
+        TextField tf = new TextField();
+        tf.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                updateTextField(item, tf);
+            }
+        });
+        tf.setText(item.getAttribute().getAttributeDiscretizer().getInputValues().get(0).toString());
+        return tf;
+    }
+
+    private void updateTextField(Item item, TextField tf) {
+        Double value = getValue(tf.getText());
+        item.setValue(item.getAttribute().getAttributeDiscretizer().getRange(value));
+    }
+
+    private Node addComboBox(Item item) {
+        ComboBox<String> cb = new ComboBox<>();
+        for (Entry entry : item.getAttribute().getDistinctValues()) {
+            cb.getItems().add(entry.getString());
+        }
+        cb.valueProperty().addListener((observable, oldValue, newValue) -> {
+            item.setValue(newValue);
+        });
+        cb.setMaxWidth(Double.MAX_VALUE);
+        return cb;
+    }
+
+    private Double getValue(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            new InfoDialog().show();
+            return 0.0;
+        }
     }
 
 
@@ -342,95 +397,18 @@ public class Controller {
         }
     }
 
-    private void addInputTableColumns(DataSet dataSet) {
-        inputTable.getColumns().clear();
-        inputTable.getItems().clear();
-        inputTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        for (Attribute attribute : dataSet.getAttributes()) {
-            if (attribute.isResult())
-                continue;
-
-            TableColumn<ObservableList<Item>, String> column = new TableColumn<>(attribute.getName());
-            column.setEditable(true);
-            column.setSortable(false);
-            column.setMaxWidth(Integer.MAX_VALUE);
-            ObservableList<String> values = FXCollections.observableArrayList();
-            values.addAll(attribute.getDistinctValues().stream().map(Entry::getString).collect(Collectors.toList()));
-            if (!attribute.isDiscrete()) {
-                addComboBoxFactory(column, values);
-            } else {
-                column.setCellFactory(param -> new TextFieldTableCell<ObservableList<Item>, String>(new DefaultStringConverter()) {
-
-                    @Override
-                    public void commitEdit(String item) {
-                        if (!isEditing() && !item.equals(getItem())) {
-                            TableView<ObservableList<Item>> table = getTableView();
-                            if (table != null) {
-                                TableColumn<ObservableList<Item>, String> column = getTableColumn();
-                                TableColumn.CellEditEvent<ObservableList<Item>, String> event = new TableColumn.CellEditEvent<>(table,
-                                        new TablePosition<>(table, getIndex(), column),
-                                        TableColumn.editCommitEvent(), item);
-                                Event.fireEvent(column, event);
-                            }
-                        }
-                        super.commitEdit(item);
-                    }
-
-                    @Override
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item != null) {
-                            setText(item);
-                        } else {
-                            setText("");
-                        }
-                    }
-                });
-            }
-            column.setOnEditCommit(event -> {
-                System.out.println(event.getRowValue());
-                ObservableList<Item> item = event.getRowValue();
-                if (item != null) {
-                    item.get(attribute.getIndex()).setValue(event.getNewValue());
-                }
-            });
-
-            inputTable.getColumns().add(column);
-        }
-
-        input = getDummyItem(dataSet);
-        inputTable.getItems().setAll(input);
-    }
-
-    private void addComboBoxFactory(TableColumn<ObservableList<Item>, String> column, final ObservableList<String> values) {
-        column.setCellFactory(param -> new ComboBoxTableCell<ObservableList<Item>, String>() {
-            {
-                getItems().setAll(values);
-            }
-
-            @Override
-            public void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item != null) {
-                    setText(item);
-                } else {
-                    setText(values.get(0));
-                }
-            }
-        });
-    }
 
     private ObservableList<Item> getDummyItem(DataSet dataSet) {
         List<Item> list = new ArrayList<>();
         for (Attribute attribute : dataSet.getAttributes()) {
             if (attribute.isResult())
                 continue;
-            list.add(new Item(attribute.getName(), attribute.getValues().get(0)));
+            list.add(new Item(attribute, attribute.getValues().get(0)));
         }
         return FXCollections.observableArrayList(list);
     }
 
-    ObservableList<Item> input;
+    List<Item> input;
 
     //</editor-fold>
 

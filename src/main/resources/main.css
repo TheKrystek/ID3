@@ -19,3 +19,6 @@
     -fx-stroke-width: 3px;
 }
 
+.boldLabels > .label{
+    -fx-font-weight: bold;
+}
