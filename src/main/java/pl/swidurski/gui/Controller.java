@@ -24,10 +24,8 @@ import pl.swidurski.gui.tree.*;
 import pl.swidurski.id3.AttributeDiscretizer;
 import pl.swidurski.id3.CSVReader;
 import pl.swidurski.id3.ID3;
-import pl.swidurski.model.Attribute;
-import pl.swidurski.model.DataSet;
-import pl.swidurski.model.Entry;
-import pl.swidurski.model.TreeNode;
+import pl.swidurski.model.*;
+import pl.swidurski.services.RulesBuilder;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -145,6 +143,14 @@ public class Controller {
         fillDataTable(dataSet);
         drawTree(dataSet);
         disableTabs(false);
+
+        RulesBuilder builder = new RulesBuilder(root);
+        List<Rule> rules = builder.build();
+        for (Rule rule : rules) {
+            System.err.println(rule);
+        }
+
+        Rule rule = rules.get(0);
     }
 
 

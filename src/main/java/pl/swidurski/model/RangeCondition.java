@@ -8,41 +8,19 @@ import pl.swidurski.utils.StringUtil;
  */
 public class RangeCondition implements Condition {
 
-    public static final String FORMAT = "%.2f";
     @Getter
-    Double lower;
-    @Getter
-    Double upper;
+    String value;
     @Getter
     Attribute attribute;
 
-    public RangeCondition(Attribute attribute, Double lower, Double upper) {
+    public RangeCondition(Attribute attribute, String value) {
         this.attribute = attribute;
-        this.lower = lower;
-        this.upper = upper;
+        this.value = value;
     }
-
 
     @Override
     public String toString() {
-        if (lower == null && upper == null) {
-            return asString("is a number");
-        }
-
-        String l = String.format(FORMAT, lower);
-        String u = String.format(FORMAT, upper);
-
-        if (lower == null) {
-            l = "-" + StringUtil.INF;
-        }
-        if (upper == null) {
-            u = StringUtil.INF;
-        }
-        return asString(String.format("in (%s ; %s]", l, u));
-    }
-
-    private String asString(String range) {
-        return String.format("%s %s", getAttributeName(), range);
+        return String.format("(%s in %s)", attribute.getName(), value);
     }
 
     @Override

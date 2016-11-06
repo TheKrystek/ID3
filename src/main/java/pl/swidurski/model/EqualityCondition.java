@@ -18,7 +18,7 @@ public class EqualityCondition implements Condition {
 
     @Override
     public String toString() {
-        return String.format("%s = %s", attribute.getName(), value);
+        return String.format("(%s = %s)", attribute.getName(), value);
     }
 
     @Override
