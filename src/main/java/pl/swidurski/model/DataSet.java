@@ -67,9 +67,13 @@ public class DataSet {
         }
     }
 
+    public DataSet clone() {
+        return getSubSet(null, null);
+    }
 
     public DataSet getSubSet(Attribute attribute, String value) {
         DataSet dataSet = new DataSet();
+
 
         List<Integer> indexes = getIndexes(attribute, value);
 
@@ -79,7 +83,7 @@ public class DataSet {
             newAttribute.setResult(a.isResult());
 
             for (int i = 0; i < a.getValues().size(); i++) {
-                if (indexes.contains(i))
+                if (indexes.contains(i) || attribute == null)
                     newAttribute.addValue(a.getValues().get(i));
             }
             dataSet.addAttribute(newAttribute);
@@ -89,6 +93,10 @@ public class DataSet {
 
     public List<Integer> getIndexes(Attribute attribute, String value) {
         List<Integer> indexes = new ArrayList<>();
+        if (attribute == null || value == null) {
+            return indexes;
+        }
+
         for (int i = 0; i < attribute.getValues().size(); i++) {
             if (attribute.getValues().get(i).equals(value)) {
                 indexes.add(i);

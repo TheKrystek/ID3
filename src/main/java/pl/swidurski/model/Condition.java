@@ -7,5 +7,6 @@ public interface Condition {
 
     String getAttributeName();
     Attribute getAttribute();
+    String getValue();
 
 }

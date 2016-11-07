@@ -18,6 +18,12 @@ public class Rule {
     @Setter
     Result result;
 
+    @Getter
+    @Setter
+    Double support, confidence;
+    @Getter
+    List<Integer> supportingIndexes = new ArrayList<>();
+
     public void append(Condition condition) {
         conditions.add(condition);
     }

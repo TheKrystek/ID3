@@ -1,8 +1,5 @@
 package pl.swidurski.gui.tree;
 
-/**
- * Created by Krystek on 2016-10-23.
- */
 
 import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
@@ -12,7 +9,9 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Author: Krystian Świdurski
+ */
 public class Cell<T extends CellContent<T>> extends Pane {
     @Getter
     @Setter

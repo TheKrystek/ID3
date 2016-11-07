@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Krystek on 2016-10-23.
+ * Author: Krystian Świdurski
  */
 public class TreeNode implements CellContent<TreeNode> {
     private String label;
@@ -33,6 +33,9 @@ public class TreeNode implements CellContent<TreeNode> {
 
     @Getter
     private Cell cell;
+
+    @Setter
+    Double possibility = 1.0;
 
     public TreeNode(Attribute value, String label, String edge) {
         this.value = value;
@@ -59,5 +62,14 @@ public class TreeNode implements CellContent<TreeNode> {
     @Override
     public String getLabel() {
         return label;
+    }
+
+    @Override
+    public String getDescription() {
+        return possibility.equals(1.0) ? null : getPossibility();
+    }
+
+    public String getPossibility() {
+        return String.format("%.1f%%", possibility * 100, 0);
     }
 }

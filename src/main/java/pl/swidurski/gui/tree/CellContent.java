@@ -7,4 +7,5 @@ public interface CellContent<T extends CellContent<T>> {
     void setCell(Cell<T> cell);
 
     String getLabel();
+    String getDescription();
 }

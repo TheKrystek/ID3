@@ -1,18 +1,21 @@
 package pl.swidurski.model;
 
+import lombok.Getter;
+
 /**
  * Created by Krystek on 2016-11-06.
  */
 public class Result {
 
-    private String result;
+    @Getter
+    private String value;
 
     public Result(String result) {
-        this.result = result;
+        this.value = result;
     }
 
     @Override
     public String toString() {
-        return String.format(" THEN %s", result);
+        return String.format(" THEN %s", value);
     }
 }

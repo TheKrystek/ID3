@@ -26,6 +26,7 @@ import pl.swidurski.id3.CSVReader;
 import pl.swidurski.id3.ID3;
 import pl.swidurski.model.*;
 import pl.swidurski.services.RulesBuilder;
+import pl.swidurski.services.StatisticService;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -37,9 +38,14 @@ import java.util.Optional;
 public class Controller {
     //    public static final String DEFAULT_PATH = "iris.csv";
     public static final String DEFAULT_PATH = "contact-lenses.csv";
+    public static final String FORMAT = "%.2f";
     private File path = new File(DEFAULT_PATH);
 
     //<editor-fold desc="FXML Fields">
+    @FXML
+    private ListView<Rule> rulesListView;
+    @FXML
+    private Button loadRulesButton;
     @FXML
     private Tab mainTab;
     @FXML
@@ -49,7 +55,11 @@ public class Controller {
     @FXML
     private Tab treeTab;
     @FXML
+    private Tab rulesTab;
+    @FXML
     private TableView<ObservableList<String>> dataTable;
+    @FXML
+    private TableView<ObservableList<String>> rulesTable;
     @FXML
     private AnchorPane leftPane;
     @FXML
@@ -73,12 +83,18 @@ public class Controller {
     @FXML
     private Label informationGain;
     @FXML
+    private Label supportLabel;
+    @FXML
+    private Label confidenceLabel;
+    @FXML
     private GridPane gridPane;
 
     //</editor-fold>
     private Graph<TreeNode> graph = new Graph<>();
     private TreeLayout layout;
     private TreeNode root;
+    private DataSet dataSet;
+    private List<Rule> rules;
 
     public void init() {
         disableTabs(true);
@@ -86,6 +102,26 @@ public class Controller {
         pathField.setText(path.getAbsolutePath());
         addTreeView(graph.getScrollPane());
         addTextFieldHandler();
+        addRulesListHandler();
+    }
+
+    private void addRulesListHandler() {
+        rulesListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            showRuleDetails(newValue);
+            showRuleData(newValue);
+        });
+    }
+
+    private void showRuleData(Rule rule) {
+        rulesTable.getItems().clear();
+        for (Integer index : rule.getSupportingIndexes()) {
+            rulesTable.getItems().add(FXCollections.observableArrayList(dataSet.getRow(index)));
+        }
+    }
+
+    private void showRuleDetails(Rule rule) {
+        supportLabel.setText(String.format(FORMAT, rule.getSupport()));
+        confidenceLabel.setText(String.format(FORMAT, rule.getConfidence()));
     }
 
     private void addTextFieldHandler() {
@@ -112,14 +148,14 @@ public class Controller {
     }
 
     private void addTreeNodeHandler(Graph<TreeNode> graph) {
-        Cell.Action<TreeNode> action = value -> showInfo(value);
+        Cell.Action<TreeNode> action = value -> showNodeInfo(value);
 
         for (Cell<TreeNode> cell : graph.getModel().getAllCells()) {
             cell.setOnAction(action);
         }
     }
 
-    private void showInfo(TreeNode node) {
+    private void showNodeInfo(TreeNode node) {
         label.setText("");
         entropy.setText("");
         conditionalEntropy.setText("");
@@ -127,9 +163,9 @@ public class Controller {
         if (node != null) {
             label.setText(node.getLabel());
             if (node.getInfo() != null) {
-                entropy.setText(String.valueOf(node.getInfo().getEntropy()));
-                conditionalEntropy.setText(String.valueOf(node.getInfo().getConditionalEntropy()));
-                informationGain.setText(String.valueOf(node.getInfo().getInformationGain()));
+                entropy.setText(String.format(FORMAT, node.getInfo().getEntropy()));
+                conditionalEntropy.setText(String.format(FORMAT, node.getInfo().getConditionalEntropy()));
+                informationGain.setText(String.format(FORMAT, node.getInfo().getInformationGain()));
             }
         }
     }
@@ -137,24 +173,25 @@ public class Controller {
     @FXML
     void loadFileAction() throws IOException {
         CSVReader reader = new CSVReader(path);
-        DataSet dataSet = reader.read();
-        askIfDyscretize(dataSet);
+        dataSet = reader.read();
+        askIfDiscretize(dataSet);
         setupGridPane(dataSet);
         fillDataTable(dataSet);
         drawTree(dataSet);
         disableTabs(false);
+    }
 
+    @FXML
+    void loadRules() {
         RulesBuilder builder = new RulesBuilder(root);
-        List<Rule> rules = builder.build();
-        for (Rule rule : rules) {
-            System.err.println(rule);
-        }
-
-        Rule rule = rules.get(0);
+        rules = builder.build();
+        rulesListView.getItems().setAll(rules);
+        StatisticService ss = new StatisticService(dataSet, rules);
+        ss.calculateStatistics();
     }
 
 
-    public void askIfDyscretize(DataSet dataSet) {
+    public void askIfDiscretize(DataSet dataSet) {
         if (!checkIfHasNumericAttriubte(dataSet)) {
             return;
         }
@@ -227,7 +264,7 @@ public class Controller {
                 }
             } else {
                 node.getCell().select(true);
-                showInfo(node);
+                showNodeInfo(node);
                 items.clear();
             }
         }
@@ -271,6 +308,7 @@ public class Controller {
         inputPane.setVisible(true);
         input = getDummyItem(dataSet);
         gridPane.getRowConstraints().clear();
+        gridPane.getChildren().clear();
         createRows();
     }
 
@@ -311,9 +349,8 @@ public class Controller {
         for (Entry entry : item.getAttribute().getDistinctValues()) {
             cb.getItems().add(entry.getString());
         }
-        cb.valueProperty().addListener((observable, oldValue, newValue) -> {
-            item.setValue(newValue);
-        });
+        cb.valueProperty().addListener((observable, oldValue, newValue) -> item.setValue(newValue));
+        cb.getSelectionModel().select(cb.getItems().get(0));
         cb.setMaxWidth(Double.MAX_VALUE);
         return cb;
     }
@@ -362,18 +399,19 @@ public class Controller {
 
     //<editor-fold desc="Data table setup">
     public void fillDataTable(DataSet dataSet) {
-        addColumns(dataSet);
-        addItems(dataSet);
+        addColumns(dataSet, dataTable);
+        addColumns(dataSet, rulesTable);
+        addDataTableItems(dataSet);
     }
 
-    private void addItems(DataSet dataSet) {
+    private void addDataTableItems(DataSet dataSet) {
         dataTable.getItems().clear();
         for (int i = 0; i < dataSet.getResult().getValues().size(); i++) {
             dataTable.getItems().add(FXCollections.observableArrayList(dataSet.getRow(i)));
         }
     }
 
-    private void addColumns(DataSet dataSet) {
+    private void addColumns(DataSet dataSet, TableView<ObservableList<String>> dataTable) {
         dataTable.getColumns().clear();
         dataTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         for (Attribute attribute : dataSet.getAttributes()) {
@@ -421,6 +459,7 @@ public class Controller {
     private void disableTabs(boolean value) {
         dataTab.setDisable(value);
         treeTab.setDisable(value);
+        rulesTab.setDisable(value);
     }
 
 

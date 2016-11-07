@@ -15,7 +15,7 @@ public class ID3 {
     TreeNode root;
 
     public ID3(DataSet dataSet) {
-        this.dataSet = dataSet;
+        this.dataSet = dataSet.clone();
     }
 
     public TreeNode calculate() {
@@ -37,7 +37,7 @@ public class ID3 {
         }
 
         Pair pair = getAttributeWithLowestEntropy(dataSet);
-        if (pair == null){
+        if (pair == null) {
             double sum = dataSet.getResult().getDistinctValues().stream().mapToDouble(p -> p.getCount()).sum();
             Entry mostPossible = null;
             for (Entry entry : dataSet.getResult().getDistinctValues()) {
@@ -45,8 +45,9 @@ public class ID3 {
                     mostPossible = entry;
                 }
             }
-            String nodeText = String.format("%s (%.1f%%)", mostPossible.getString(), mostPossible.getCount() / sum * 100);
-            parent.addChild(new TreeNode(null, nodeText, value));
+            TreeNode node = new TreeNode(null, mostPossible.getString(), value);
+            node.setPossibility(mostPossible.getCount() / sum);
+            parent.addChild(node);
             return;
         }
 

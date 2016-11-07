@@ -10,7 +10,11 @@ public class LabelCell<T extends CellContent<T>> extends Cell<T> {
 
     public LabelCell(T value) {
         super(value);
-        Label label = new Label(value.getLabel());
+        String text = value.getLabel();
+        if (value.getDescription() != null){
+            text += String.format(" (%s)", value.getDescription());
+        }
+        Label label = new Label(text);
         label.getStyleClass().add("label-cell");
         setView(new HBox(label));
     }
