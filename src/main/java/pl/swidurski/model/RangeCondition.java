@@ -1,7 +1,6 @@
 package pl.swidurski.model;
 
 import lombok.Getter;
-import pl.swidurski.utils.StringUtil;
 
 /**
  * Created by Krystek on 2016-11-06.
@@ -26,5 +25,23 @@ public class RangeCondition implements Condition {
     @Override
     public String getAttributeName() {
         return attribute.getName();
+    }
+
+    @Override
+    public boolean match(String value) {
+        Double val = getDouble(value);
+        if (val == null || getAttribute().getAttributeDiscretizer() == null) {
+            return false;
+        }
+        return this.value.equals(getAttribute().getAttributeDiscretizer().getRange(val));
+    }
+
+
+    private Double getDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

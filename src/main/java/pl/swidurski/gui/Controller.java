@@ -25,6 +25,7 @@ import pl.swidurski.id3.AttributeDiscretizer;
 import pl.swidurski.id3.CSVReader;
 import pl.swidurski.id3.ID3;
 import pl.swidurski.model.*;
+import pl.swidurski.services.RuleSolver;
 import pl.swidurski.services.RulesBuilder;
 import pl.swidurski.services.StatisticService;
 
@@ -87,6 +88,10 @@ public class Controller {
     @FXML
     private Label confidenceLabel;
     @FXML
+    private Label ruleLabel;
+    @FXML
+    private Label resultLabel;
+    @FXML
     private GridPane gridPane;
 
     //</editor-fold>
@@ -114,12 +119,18 @@ public class Controller {
 
     private void showRuleData(Rule rule) {
         rulesTable.getItems().clear();
-        for (Integer index : rule.getSupportingIndexes()) {
-            rulesTable.getItems().add(FXCollections.observableArrayList(dataSet.getRow(index)));
+
+        if (rule != null) {
+            for (Integer index : rule.getSupportingIndexes()) {
+                rulesTable.getItems().add(FXCollections.observableArrayList(dataSet.getRow(index)));
+            }
         }
     }
 
     private void showRuleDetails(Rule rule) {
+        if (rule == null) {
+            return;
+        }
         supportLabel.setText(String.format(FORMAT, rule.getSupport()));
         confidenceLabel.setText(String.format(FORMAT, rule.getConfidence()));
     }
@@ -229,10 +240,24 @@ public class Controller {
     }
 
     @FXML
-    void addRowAction() {
+    void showOnTree() {
         clearSelectedNodes();
         markInputOnTree();
         treeTab.getTabPane().getSelectionModel().select(treeTab);
+    }
+
+    @FXML
+    void useRules(){
+        if (rules!= null && !rules.isEmpty()){
+            loadRules();
+            RuleSolver solver = new RuleSolver(rules);
+            Rule result = solver.solve(input);
+            if (result != null){
+                ruleLabel.setText(result.toString());
+                resultLabel.setText(result.getResult().getValue());
+            }
+        }
+        rulesTab.getTabPane().getSelectionModel().select(rulesTab);
     }
 
     private void clearSelectedNodes() {
@@ -286,22 +311,7 @@ public class Controller {
         }
     }
 
-    @Data
-    class Item {
-        String value;
-        Attribute attribute;
-        String attributeName;
 
-
-        public Item(Attribute attribute, String value) {
-            this.value = value;
-            this.attribute = attribute;
-        }
-
-        public String getAttributeName() {
-            return attribute.getName();
-        }
-    }
 
 
     private void setupGridPane(DataSet dataSet) {

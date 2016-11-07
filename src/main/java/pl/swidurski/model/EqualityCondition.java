@@ -25,4 +25,9 @@ public class EqualityCondition implements Condition {
     public String getAttributeName() {
         return attribute.getName();
     }
+
+    @Override
+    public boolean match(String value) {
+        return this.value.equals(value);
+    }
 }

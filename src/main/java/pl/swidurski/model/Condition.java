@@ -8,5 +8,6 @@ public interface Condition {
     String getAttributeName();
     Attribute getAttribute();
     String getValue();
+    boolean match(String value);
 
 }
