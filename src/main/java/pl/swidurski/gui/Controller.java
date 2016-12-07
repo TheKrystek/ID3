@@ -15,7 +15,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import lombok.Data;
 import pl.swidurski.gui.dialogs.AskForDiscretizationDialog;
 import pl.swidurski.gui.dialogs.AskForRangeDialog;
 import pl.swidurski.gui.dialogs.InfoDialog;
@@ -213,9 +212,9 @@ public class Controller {
             for (Attribute attribute : dataSet.getAttributes()) {
                 if (attribute.isNumeric() && !attribute.isResult()) {
                     AskForRangeDialog askForRangeDialog = new AskForRangeDialog(attribute);
-                    int ranges = askForRangeDialog.show();
                     try {
-                        AttributeDiscretizer a = new AttributeDiscretizer(attribute, ranges);
+                        int ranges = askForRangeDialog.show();
+                        new AttributeDiscretizer(attribute, ranges);
                     } catch (Exception e) {
                         System.err.println("Cannot discrtize attributeName " + attribute.getName());
                     }
@@ -247,12 +246,12 @@ public class Controller {
     }
 
     @FXML
-    void useRules(){
-        if (rules!= null && !rules.isEmpty()){
+    void useRules() {
+        if (rules != null && !rules.isEmpty()) {
             loadRules();
             RuleSolver solver = new RuleSolver(rules);
             Rule result = solver.solve(input);
-            if (result != null){
+            if (result != null) {
                 ruleLabel.setText(result.toString());
                 resultLabel.setText(result.getResult().getValue());
             }
@@ -310,8 +309,6 @@ public class Controller {
             }
         }
     }
-
-
 
 
     private void setupGridPane(DataSet dataSet) {
@@ -394,6 +391,7 @@ public class Controller {
         layout.getNodeSize().bind(nodeSizeSlider.valueProperty());
         layout.getSiblingDistance().bind(siblingDistanceSlider.valueProperty());
         layout.getTreeDistance().bind(treeDistanceSlider.valueProperty());
+        layout.bind();
         layout.execute();
     }
 

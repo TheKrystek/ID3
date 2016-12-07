@@ -23,11 +23,7 @@ public class AskForRangeDialog {
         int defaultValue = 2;
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
-            try {
-                return Integer.parseInt(result.get());
-            } catch (Exception e) {
-                System.err.println("Cannot parse using default value =" + defaultValue);
-            }
+            return Integer.parseInt(result.get());
         }
         return defaultValue;
     }

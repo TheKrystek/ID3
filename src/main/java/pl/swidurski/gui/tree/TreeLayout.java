@@ -13,7 +13,7 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
     Graph<T> graph;
 
     @Getter
-    private SimpleDoubleProperty limit = new SimpleDoubleProperty(50);
+    private SimpleDoubleProperty limit = new SimpleDoubleProperty(1);
     @Getter
     private SimpleDoubleProperty nodeSize = new SimpleDoubleProperty(1);
     @Getter
@@ -25,14 +25,6 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
 
     public TreeLayout(Graph graph) {
         this.graph = graph;
-
-        ChangeListener<Number> listener = (observable, oldValue, newValue) -> execute();
-
-        limit.addListener(listener);
-        nodeSize.addListener(listener);
-        siblingDistance.addListener(listener);
-        treeDistance.addListener(listener);
-        step.addListener(listener);
     }
 
 
@@ -43,6 +35,16 @@ public class TreeLayout<T extends CellContent<T>> extends Layout {
         checkAllChildrenOnScreen(root);
         calculateFinalPositions(root, 0);
         draw(root);
+    }
+
+    @Override
+    public void bind() {
+        ChangeListener<Number> listener = (observable, oldValue, newValue) -> execute();
+        limit.addListener(listener);
+        nodeSize.addListener(listener);
+        siblingDistance.addListener(listener);
+        treeDistance.addListener(listener);
+        step.addListener(listener);
     }
 
     private void calculateFinalPositions(Cell<T> node, int modSum) {
