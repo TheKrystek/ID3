@@ -24,20 +24,18 @@ import pl.swidurski.id3.AttributeDiscretizer;
 import pl.swidurski.id3.CSVReader;
 import pl.swidurski.id3.ID3;
 import pl.swidurski.model.*;
+import pl.swidurski.services.RuleBuilder;
 import pl.swidurski.services.RuleSolver;
-import pl.swidurski.services.RulesBuilder;
 import pl.swidurski.services.StatisticService;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class Controller {
-    //    public static final String DEFAULT_PATH = "iris.csv";
-    public static final String DEFAULT_PATH = "contact-lenses.csv";
+    public static final String DEFAULT_PATH = "iris.csv";
+    //    public static final String DEFAULT_PATH = "contact-lenses.csv";
     public static final String FORMAT = "%.2f";
     private File path = new File(DEFAULT_PATH);
 
@@ -193,7 +191,7 @@ public class Controller {
 
     @FXML
     void loadRules() {
-        RulesBuilder builder = new RulesBuilder(root);
+        RuleBuilder builder = new RuleBuilder(root, dataSet.getAttributes());
         rules = builder.build();
         rulesListView.getItems().setAll(rules);
         StatisticService ss = new StatisticService(dataSet, rules);
@@ -279,7 +277,41 @@ public class Controller {
                 Item item = items.stream().filter(p -> p.getAttributeName().equals(current.getLabel())).findFirst().get();
                 if (item != null) {
                     current.getCell().select(true);
-                    node = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst().get();
+                    Optional<TreeNode> n = node.getChildren().stream().filter(p -> p.getEdge().equals(item.getValue())).findFirst();
+                    if (n.isPresent()) {
+                        node = n.get();
+                    } else {
+                        HashMap<String, Integer> count = new HashMap<>();
+                        // Create histogram and its max value
+                        int max = 0;
+                        String max_name = "";
+                        for (TreeNode child : node.getChildren()) {
+                            String name = child.getLabel();
+                            Integer value = count.getOrDefault(name, 0) + 1;
+                            count.put(name, value);
+                            if (value > max) {
+                                max = value;
+                                max_name = child.getLabel();
+                            }
+                        }
+                        // Count how many items have count equal to max
+                        int c = 0;
+                        for (Map.Entry<String, Integer> entry : count.entrySet()) {
+                            if (entry.getValue().equals(max)) {
+                                c++;
+                            }
+                        }
+
+                        // If we have only clear situation
+                        if (c == 1) {
+                            String name = max_name;
+                            node = node.getChildren().stream().filter(p -> p.getLabel().equals(name)).findAny().get();
+                        } else {
+                            System.out.println("error");
+                        }
+
+
+                    }
                     node.getCell().select(true);
                     Edge<TreeNode> edge = graph.getModel().getEdge(node, current);
                     if (edge != null)
@@ -348,6 +380,7 @@ public class Controller {
 
     private void updateTextField(Item item, TextField tf) {
         Double value = getValue(tf.getText());
+        item.setNumericValue(value);
         item.setValue(item.getAttribute().getAttributeDiscretizer().getRange(value));
     }
 
@@ -471,7 +504,7 @@ public class Controller {
     }
 
 
-    //<editor-fold desc="Tree creation">
+    //<editor-fold desc="OperatorNode creation">
     private void addGraphComponents(TreeNode node) {
         graph.clearAllLayers();
         Model model = graph.getModel();

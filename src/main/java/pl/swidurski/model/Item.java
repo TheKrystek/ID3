@@ -1,6 +1,7 @@
 package pl.swidurski.model;
 
 import lombok.Data;
+import lombok.Setter;
 
 /**
  * Author: Krystian Świdurski
@@ -10,6 +11,8 @@ public class Item {
     String value;
     Attribute attribute;
     String attributeName;
+    @Setter
+    private Double numericValue;
 
 
     public Item(Attribute attribute, String value) {

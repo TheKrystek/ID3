@@ -18,6 +18,7 @@ public class TreeNode implements CellContent<TreeNode> {
     private String edge;
 
     @Getter
+    @Setter
     protected Attribute value;
 
     @Getter

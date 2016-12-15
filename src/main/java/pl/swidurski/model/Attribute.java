@@ -16,8 +16,6 @@ public class Attribute {
     @Getter
     private boolean discrete;
 
-
-
     @Getter
     AttributeDiscretizer attributeDiscretizer;
 

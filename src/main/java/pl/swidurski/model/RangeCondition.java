@@ -30,9 +30,16 @@ public class RangeCondition implements Condition {
     @Override
     public boolean match(String value) {
         Double val = getDouble(value);
-        if (val == null || getAttribute().getAttributeDiscretizer() == null) {
+        // If we cannot parse value and it's a numerical attribute
+        if (val == null && getAttribute().getAttributeDiscretizer() == null) {
             return false;
         }
+
+        // If it's not a numerical attribute
+        if (val == null){
+            return this.value.equals(value);
+        }
+
         return this.value.equals(getAttribute().getAttributeDiscretizer().getRange(val));
     }
 

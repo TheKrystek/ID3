@@ -13,14 +13,14 @@ public class AskForRangeDialog {
     private TextInputDialog dialog;
 
     public AskForRangeDialog(Attribute attribute) {
-        dialog = new TextInputDialog("2");
+        dialog = new TextInputDialog("5");
         dialog.setTitle("Number of ranges");
         dialog.setHeaderText("Enter number of ranges for attributeName \"" + attribute.getName() + "\"");
         dialog.setContentText("Please enter number of ranges:");
     }
 
     public int show() {
-        int defaultValue = 2;
+        int defaultValue = 5;
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
             return Integer.parseInt(result.get());
