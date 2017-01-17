@@ -49,7 +49,7 @@ public abstract class RandomInitiation implements InitializationMethod {
 
     protected Operator getRandomTerminal() {
         if (getRandomInt() < constantProbability) {
-            return new Constant(random.nextDouble() * (random.nextInt() % 100));
+            return new Constant(random.nextDouble());
         }
         return instructionSetHelper.getRandomTerminal();
     }

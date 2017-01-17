@@ -51,8 +51,8 @@ public class VanillaGP implements GeneticAlgorithm {
     public Individual start() {
         Individual champion;
         population = initialize();
+        calculateFitness(population);
         do {
-            calculateFitness(population);
             Population newPopulation = new Population();
             do {
                 Population p1 = select(population);
@@ -69,7 +69,6 @@ public class VanillaGP implements GeneticAlgorithm {
                     result.add(p1);
                     result.add(p2);
                 }
-
                 newPopulation.add(result);
             }
             while (newPopulation.size() < populationSize);
@@ -77,6 +76,7 @@ public class VanillaGP implements GeneticAlgorithm {
             iteration++;
             champion = findChampion(newPopulation);
             update(newPopulation, champion, iteration);
+            population = newPopulation;
         }
         while (!stop(champion, null));
         return champion;

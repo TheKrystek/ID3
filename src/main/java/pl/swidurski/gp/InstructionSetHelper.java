@@ -4,6 +4,7 @@ import lombok.Getter;
 import pl.swidurski.gp.operators.Constant;
 import pl.swidurski.gp.operators.Operator;
 
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
 
@@ -15,11 +16,11 @@ public class InstructionSetHelper {
     @Getter
     private final InstructionSet instructionSet;
 
-    private final Random random;
+    private final SecureRandom random;
 
     public InstructionSetHelper(InstructionSet instructionSet) {
         this.instructionSet = instructionSet;
-        this.random = new Random(System.currentTimeMillis());
+        this.random = new SecureRandom();
     }
 
     private Operator getRandom(List<Operator> operators) {
